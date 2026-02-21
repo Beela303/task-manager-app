@@ -43,15 +43,15 @@ export const useTaskStore = defineStore('tasks', {
 
   actions: {
     init() {
-      const stored = loadFromStorage<Task[]>(STORAGE_KEY)
+    const stored = loadFromStorage<Task[]>(STORAGE_KEY)
 
-      if (stored) {
-        this.tasks = stored.map(task => ({
-          ...task,
-          createdAt: new Date(task.createdAt),
-          dueDate: task.dueDate ? new Date(task.dueDate) : null
-        }))
-      }
+        if (stored) {
+            this.tasks = stored.map(task => ({
+            ...task,
+            createdAt: new Date(task.createdAt),
+            dueDate: task.dueDate ? new Date(task.dueDate) : null
+            }))
+        }
     },
 
     persist() {

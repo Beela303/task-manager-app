@@ -26,6 +26,15 @@
         </ion-select>
       </ion-item>
 
+      <!-- Due Date Picker -->
+      <ion-item>
+        <ion-label>Due Date</ion-label>
+        <ion-datetime
+          presentation="date"
+          v-model="selectedDueDate"
+        />
+      </ion-item>
+
       <ion-button expand="block" @click="createTask">
         Add Task
       </ion-button>
@@ -75,7 +84,10 @@
           />
 
           <ion-label
-            :class="{ completed: task.completed }"
+            :class="{
+              completed: task.completed,
+              overdue: isOverdue(task)
+            }"
           >
             {{ task.title }}
 
@@ -126,7 +138,8 @@ import {
   IonSelectOption,
   IonSegment,
   IonSegmentButton,
-  IonBadge
+  IonBadge,
+  IonDatetime
 } from '@ionic/vue'
 
 import { useTaskStore } from '@/stores/task.store'
@@ -136,6 +149,8 @@ const taskStore = useTaskStore()
 
 const newTask = ref('')
 const selectedPriority = ref<'low' | 'medium' | 'high'>('medium')
+
+const selectedDueDate = ref<string | null>(null)
 
 onMounted(() => {
   taskStore.init()
@@ -149,12 +164,24 @@ function createTask() {
     title: newTask.value,
     completed: false,
     createdAt: new Date(),
-    dueDate: null,
+    dueDate: selectedDueDate.value ? new Date(selectedDueDate.value) : null,
     priority: selectedPriority.value
   }
 
   taskStore.addTask(task)
   newTask.value = ''
+}
+
+function isOverdue(task: Task) {
+  if (!task.dueDate || task.completed) return false
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const due = new Date(task.dueDate)
+  due.setHours(0, 0, 0, 0)
+
+  return due < today
 }
 
 function onStatusChange(event: CustomEvent) {
@@ -174,11 +201,18 @@ function priorityColor(priority: 'low' | 'medium' | 'high') {
 
   return map[priority]
 }
+
+
 </script>
 
 <style scoped>
 .completed {
   text-decoration: line-through;
   opacity: 0.6;
+}
+
+.overdue {
+  color: var(--ion-color-danger);
+  font-weight: bold;
 }
 </style>
