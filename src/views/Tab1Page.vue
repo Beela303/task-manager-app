@@ -91,49 +91,33 @@
       </ion-item>
 
       <!-- Task List -->
-      <ion-list>
-        <ion-item
-          v-for="task in taskStore.filteredTasks"
-          :key="task.id"
-        >
-          <ion-checkbox
-            slot="start"
-            :checked="task.completed"
-            @ionChange="taskStore.toggleTask(task.id)"
-          />
+      <draggable
+        v-model="taskStore.tasks"
+        item-key="id"
+        @end="taskStore.persist()"
+      >
+        <template #item="{ element: task }">
+          <ion-item>
+            <ion-checkbox
+              slot="start"
+              :checked="task.completed"
+              @ionChange="taskStore.toggleTask(task.id)"
+            />
 
-          <ion-label
-            :class="{
-              completed: task.completed,
-              overdue: isOverdue(task)
-            }"
-          >
-            {{ task.title }}
+            <ion-label>
+              {{ task.title }}
+            </ion-label>
 
-            <div v-if="task.dueDate">
-              <small>
-                Due:
-                {{ new Date(task.dueDate).toLocaleDateString() }}
-              </small>
-            </div>
-          </ion-label>
-
-          <ion-badge
-            :color="priorityColor(task.priority)"
-          >
-            {{ task.priority }}
-          </ion-badge>
-
-          <ion-button
-            fill="clear"
-            color="danger"
-            @click="taskStore.deleteTask(task.id)"
-          >
-            Delete
-          </ion-button>
-
-        </ion-item>
-      </ion-list>
+            <ion-button
+              fill="clear"
+              color="danger"
+              @click="taskStore.deleteTask(task.id)"
+            >
+              Delete
+            </ion-button>
+          </ion-item>
+        </template>
+      </draggable>
 
     </ion-content>
   </ion-page>
@@ -161,6 +145,8 @@ import {
   IonDatetime,
   IonSearchbar
 } from '@ionic/vue'
+
+import draggable from 'vuedraggable'
 
 import { useTaskStore } from '@/stores/task.store'
 import { Task } from '@/types/task'
