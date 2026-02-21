@@ -8,7 +8,9 @@ export const useTaskStore = defineStore('tasks', {
 
     // Filters
     filterStatus: 'all' as 'all' | 'completed' | 'pending',
-    filterPriority: 'all' as 'all' | 'low' | 'medium' | 'high'
+    filterPriority: 'all' as 'all' | 'low' | 'medium' | 'high',
+    searchQuery: '' as string,
+    sortBy: 'createdAt' as 'createdAt' | 'dueDate' | 'priority'
   }),
 
   getters: {
@@ -19,25 +21,52 @@ export const useTaskStore = defineStore('tasks', {
       state.tasks.filter(t => !t.completed),
 
     filteredTasks: (state) => {
-      let filtered = state.tasks
+        let filtered = [...state.tasks]
 
-      // Status filter
-      if (state.filterStatus === 'completed') {
-        filtered = filtered.filter(t => t.completed)
-      }
+        // Status filter
+        if (state.filterStatus === 'completed') {
+            filtered = filtered.filter(t => t.completed)
+        }
 
-      if (state.filterStatus === 'pending') {
-        filtered = filtered.filter(t => !t.completed)
-      }
+        if (state.filterStatus === 'pending') {
+            filtered = filtered.filter(t => !t.completed)
+        }
 
-      // Priority filter
-      if (state.filterPriority !== 'all') {
-        filtered = filtered.filter(
-          t => t.priority === state.filterPriority
-        )
-      }
+        // Priority filter
+        if (state.filterPriority !== 'all') {
+            filtered = filtered.filter(
+            t => t.priority === state.filterPriority
+            )
+        }
 
-      return filtered
+        // Search
+        if (state.searchQuery.trim()) {
+            filtered = filtered.filter(t =>
+            t.title.toLowerCase().includes(state.searchQuery.toLowerCase())
+            )
+        }
+
+        // Sorting
+        filtered.sort((a, b) => {
+            if (state.sortBy === 'createdAt') {
+            return b.createdAt.getTime() - a.createdAt.getTime()
+            }
+
+            if (state.sortBy === 'dueDate') {
+            if (!a.dueDate) return 1
+            if (!b.dueDate) return -1
+            return a.dueDate.getTime() - b.dueDate.getTime()
+            }
+
+            if (state.sortBy === 'priority') {
+            const order = { high: 1, medium: 2, low: 3 }
+            return order[a.priority] - order[b.priority]
+            }
+
+            return 0
+        })
+
+        return filtered
     }
   },
 
@@ -82,6 +111,14 @@ export const useTaskStore = defineStore('tasks', {
 
     setPriorityFilter(priority: 'all' | 'low' | 'medium' | 'high') {
       this.filterPriority = priority
+    },
+
+    setSearchQuery(query: string) {
+        this.searchQuery = query
+    },
+
+    setSortBy(sort: 'createdAt' | 'dueDate' | 'priority') {
+        this.sortBy = sort
     }
   }
 })

@@ -39,6 +39,25 @@
         Add Task
       </ion-button>
 
+      <!-- Search Bar -->
+      <ion-searchbar
+        placeholder="Search tasks"
+        @ionInput="taskStore.setSearchQuery($event.detail.value)"
+      />
+        
+      <!-- Dropdown -->
+      <ion-item>
+        <ion-label>Sort By</ion-label>
+        <ion-select
+          :value="taskStore.sortBy"
+          @ionChange="taskStore.setSortBy($event.detail.value)"
+        >
+          <ion-select-option value="createdAt">Created</ion-select-option>
+          <ion-select-option value="dueDate">Due Date</ion-select-option>
+          <ion-select-option value="priority">Priority</ion-select-option>
+        </ion-select>
+      </ion-item>
+
       <!-- Status Filter -->
       <ion-segment
         :value="taskStore.filterStatus"
@@ -139,7 +158,8 @@ import {
   IonSegment,
   IonSegmentButton,
   IonBadge,
-  IonDatetime
+  IonDatetime,
+  IonSearchbar
 } from '@ionic/vue'
 
 import { useTaskStore } from '@/stores/task.store'
