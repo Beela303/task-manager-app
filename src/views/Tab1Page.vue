@@ -8,7 +8,26 @@
 
     <ion-content class="ion-padding">
 
-      <!-- Add Task Input -->
+      <!-- ================= STATISTICS ================= -->
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Statistics</ion-card-title>
+        </ion-card-header>
+
+        <ion-card-content>
+          <p>Total: {{ totalTasks }}</p>
+          <p>Completed: {{ completedCount }}</p>
+          <p>Pending: {{ pendingCount }}</p>
+          <p>Completion: {{ completionRate }}%</p>
+
+          <ion-progress-bar
+            :value="completionRate / 100"
+          />
+        </ion-card-content>
+      </ion-card>
+
+      <!-- ================= ADD TASK ================= -->
+
       <ion-item>
         <ion-input
           v-model="newTask"
@@ -16,7 +35,6 @@
         />
       </ion-item>
 
-      <!-- Priority Selector -->
       <ion-item>
         <ion-label>Priority</ion-label>
         <ion-select v-model="selectedPriority">
@@ -26,7 +44,6 @@
         </ion-select>
       </ion-item>
 
-      <!-- Due Date Picker -->
       <ion-item>
         <ion-label>Due Date</ion-label>
         <ion-datetime
@@ -44,6 +61,8 @@
         placeholder="Search tasks"
         @ionInput="taskStore.setSearchQuery($event.detail.value)"
       />
+
+      <!--@ionInput="taskStore.setSearchQuery($event.detail.value || '')"-->
         
       <!-- Dropdown -->
       <ion-item>
@@ -59,7 +78,7 @@
       </ion-item>
 
       <!-- Status Filter -->
-      <ion-segment
+      <!--<ion-segment
         :value="taskStore.filterStatus"
         @ionChange="onStatusChange"
       >
@@ -74,10 +93,10 @@
         <ion-segment-button value="completed">
           <ion-label>Completed</ion-label>
         </ion-segment-button>
-      </ion-segment>
+      </ion-segment>-->
 
       <!-- Priority Filter -->
-      <ion-item>
+      <!--<ion-item>
         <ion-label>Filter Priority</ion-label>
         <ion-select
           :value="taskStore.filterPriority"
@@ -88,25 +107,47 @@
           <ion-select-option value="medium">Medium</ion-select-option>
           <ion-select-option value="high">High</ion-select-option>
         </ion-select>
-      </ion-item>
+      </ion-item>-->
 
-      <!-- Task List -->
+      <!-- ================= TASK LIST ================= -->
+
       <draggable
-        v-model="taskStore.tasks"
+        :list="taskStore.filteredTasks"
         item-key="id"
-        @end="taskStore.persist()"
+        tag="div"
+        ghost-class="dragging"
+        :disabled="isFiltering"
+        @end="onDragEnd"
       >
         <template #item="{ element: task }">
-          <ion-item>
+          <ion-item class="task-item">
+
             <ion-checkbox
               slot="start"
               :checked="task.completed"
               @ionChange="taskStore.toggleTask(task.id)"
             />
 
-            <ion-label>
+            <ion-label
+              :class="{
+                completed: task.completed,
+                overdue: isOverdue(task)
+              }"
+              @click="openEdit(task)"
+            >
               {{ task.title }}
+
+              <div v-if="task.dueDate">
+                <small>
+                  Due:
+                  {{ new Date(task.dueDate).toLocaleDateString() }}
+                </small>
+              </div>
             </ion-label>
+
+            <ion-badge :color="priorityColor(task.priority)">
+              {{ task.priority }}
+            </ion-badge>
 
             <ion-button
               fill="clear"
@@ -115,16 +156,56 @@
             >
               Delete
             </ion-button>
+
           </ion-item>
         </template>
       </draggable>
+
+      <!-- ================= EDIT MODAL ================= -->
+
+      <ion-modal :is-open="isEditOpen">
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Edit Task</ion-title>
+          </ion-toolbar>
+        </ion-header>
+
+        <ion-content class="ion-padding" v-if="editingTask">
+
+          <ion-item>
+            <ion-input v-model="editingTask.title" />
+          </ion-item>
+
+          <ion-item>
+            <ion-label>Priority</ion-label>
+            <ion-select v-model="editingTask.priority">
+              <ion-select-option value="low">Low</ion-select-option>
+              <ion-select-option value="medium">Medium</ion-select-option>
+              <ion-select-option value="high">High</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-button expand="block" @click="saveEdit">
+            Save
+          </ion-button>
+
+          <ion-button
+            expand="block"
+            fill="outline"
+            @click="isEditOpen = false"
+          >
+            Cancel
+          </ion-button>
+
+        </ion-content>
+      </ion-modal>
 
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   IonPage,
   IonHeader,
@@ -134,20 +215,22 @@ import {
   IonItem,
   IonInput,
   IonButton,
-  IonList,
   IonCheckbox,
   IonLabel,
   IonSelect,
   IonSelectOption,
-  IonSegment,
-  IonSegmentButton,
   IonBadge,
   IonDatetime,
-  IonSearchbar
+  IonSearchbar,
+  IonModal,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonProgressBar
 } from '@ionic/vue'
 
 import draggable from 'vuedraggable'
-
 import { useTaskStore } from '@/stores/task.store'
 import { Task } from '@/types/task'
 
@@ -155,8 +238,16 @@ const taskStore = useTaskStore()
 
 const newTask = ref('')
 const selectedPriority = ref<'low' | 'medium' | 'high'>('medium')
-
 const selectedDueDate = ref<string | null>(null)
+
+const isFiltering = computed(() =>
+  taskStore.filterStatus !== 'all' ||
+  taskStore.filterPriority !== 'all' ||
+  taskStore.searchQuery.trim() !== ''
+)
+
+const isEditOpen = ref(false)
+const editingTask = ref<Task | null>(null)
 
 onMounted(() => {
   taskStore.init()
@@ -170,7 +261,9 @@ function createTask() {
     title: newTask.value,
     completed: false,
     createdAt: new Date(),
-    dueDate: selectedDueDate.value ? new Date(selectedDueDate.value) : null,
+    dueDate: selectedDueDate.value
+      ? new Date(selectedDueDate.value)
+      : null,
     priority: selectedPriority.value
   }
 
@@ -178,24 +271,45 @@ function createTask() {
   newTask.value = ''
 }
 
+function onDragEnd(event: any) {
+  const { oldIndex, newIndex } = event
+  if (oldIndex === newIndex) return
+
+  const movedTask = taskStore.filteredTasks[oldIndex]
+
+  const realOldIndex = taskStore.tasks.findIndex(
+    t => t.id === movedTask.id
+  )
+
+  const [removed] = taskStore.tasks.splice(realOldIndex, 1)
+  taskStore.tasks.splice(newIndex, 0, removed)
+
+  taskStore.persist()
+}
+
+function openEdit(task: Task) {
+  editingTask.value = { ...task }
+  isEditOpen.value = true
+}
+
+function saveEdit() {
+  if (!editingTask.value) return
+
+  const index = taskStore.tasks.findIndex(
+    t => t.id === editingTask.value!.id
+  )
+
+  if (index !== -1) {
+    taskStore.tasks[index] = { ...editingTask.value }
+    taskStore.persist()
+  }
+
+  isEditOpen.value = false
+}
+
 function isOverdue(task: Task) {
   if (!task.dueDate || task.completed) return false
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const due = new Date(task.dueDate)
-  due.setHours(0, 0, 0, 0)
-
-  return due < today
-}
-
-function onStatusChange(event: CustomEvent) {
-  taskStore.setStatusFilter(event.detail.value)
-}
-
-function onPriorityChange(event: CustomEvent) {
-  taskStore.setPriorityFilter(event.detail.value)
+  return new Date(task.dueDate) < new Date()
 }
 
 function priorityColor(priority: 'low' | 'medium' | 'high') {
@@ -204,11 +318,26 @@ function priorityColor(priority: 'low' | 'medium' | 'high') {
     medium: 'warning',
     high: 'danger'
   }
-
   return map[priority]
 }
 
+/* ================= STATISTICS ================= */
 
+const totalTasks = computed(() => taskStore.tasks.length)
+
+const completedCount = computed(() =>
+  taskStore.tasks.filter(t => t.completed).length
+)
+
+const pendingCount = computed(() =>
+  taskStore.tasks.filter(t => !t.completed).length
+)
+
+const completionRate = computed(() =>
+  totalTasks.value
+    ? Math.round((completedCount.value / totalTasks.value) * 100)
+    : 0
+)
 </script>
 
 <style scoped>
@@ -220,5 +349,13 @@ function priorityColor(priority: 'low' | 'medium' | 'high') {
 .overdue {
   color: var(--ion-color-danger);
   font-weight: bold;
+}
+
+.task-item {
+  transition: all 0.3s ease;
+}
+
+.dragging {
+  opacity: 0.5;
 }
 </style>
