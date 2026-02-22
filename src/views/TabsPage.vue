@@ -5,17 +5,17 @@
       <ion-tab-bar slot="bottom">
         <ion-tab-button tab="tab1" href="/tabs/tab1">
           <ion-icon :icon="list" />
-          <ion-label>Tasks</ion-label>
+          <!--<ion-label>Tasks</ion-label>-->
         </ion-tab-button>
 
         <ion-tab-button tab="tab2" href="/tabs/tab2">
           <ion-icon :icon="add" />
-          <ion-label>Add</ion-label>
+          <!--<ion-label>Add</ion-label>-->
         </ion-tab-button>
 
         <ion-tab-button tab="tab3" href="/tabs/tab3">
           <ion-icon :icon="statsChart" />
-          <ion-label>Stats</ion-label>
+          <!--<ion-label>Stats</ion-label>-->
         </ion-tab-button>
       </ion-tab-bar>
     </ion-tabs>

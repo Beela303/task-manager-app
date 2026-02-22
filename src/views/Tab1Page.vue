@@ -22,6 +22,7 @@
         <ion-select
           :value="taskStore.sortBy"
           @ionChange="taskStore.setSortBy($event.detail.value)"
+          slot="end"
         >
           <ion-select-option value="createdAt">Created</ion-select-option>
           <ion-select-option value="dueDate">Due Date</ion-select-option>

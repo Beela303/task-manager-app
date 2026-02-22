@@ -119,6 +119,12 @@ const completionRate = computed(() =>
 </script>
 
 <style scoped lang="scss">
+//COLORS
+$text-color: #fafafa;
+$primary-color: #1c021eff;
+$secondary: #4a0847ff;
+$tertiary: #bc0c79ff;
+
 .circle-wrapper {
   display: flex;
   justify-content: center;
@@ -138,7 +144,8 @@ const completionRate = computed(() =>
 
 .circle {
   fill: none;
-  stroke: var(--ion-color-primary);
+  /*stroke: var(--ion-color-primary);*/
+  stroke: $tertiary;
   stroke-width: 3.8;
   stroke-linecap: round;
   transition: stroke-dasharray 0.6s ease;
@@ -148,5 +155,10 @@ const completionRate = computed(() =>
   fill: var(--ion-text-color);
   font-size: 0.5em;
   text-anchor: middle;
+}
+
+ion-card {
+  color: $text-color;
+  background: $tertiary;
 }
 </style>
