@@ -8,21 +8,32 @@
 
     <ion-content class="ion-padding">
 
-      <!-- ================= STATISTICS ================= -->
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Statistics</ion-card-title>
-        </ion-card-header>
+      <div class="circle-wrapper">
+        <svg viewBox="0 0 36 36" class="circular-chart">
+          <path
+            class="circle-bg"
+            d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831
+               a 15.9155 15.9155 0 0 1 0 -31.831"
+          />
+          <path
+            class="circle"
+            :stroke-dasharray="completionRate + ', 100'"
+            d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831
+               a 15.9155 15.9155 0 0 1 0 -31.831"
+          />
+          <text x="18" y="20.35" class="percentage">
+            {{ completionRate }}%
+          </text>
+        </svg>
+      </div>
 
+      <ion-card>
         <ion-card-content>
           <p>Total: {{ totalTasks }}</p>
           <p>Completed: {{ completedCount }}</p>
           <p>Pending: {{ pendingCount }}</p>
-          <p>Completion: {{ completionRate }}%</p>
-
-          <ion-progress-bar
-            :value="completionRate / 100"
-          />
         </ion-card-content>
       </ion-card>
 
@@ -56,7 +67,25 @@ import {
   IonProgressBar
 } from '@ionic/vue'
 
-import draggable from 'vuedraggable'
+import { useTaskStore } from '@/stores/task.store'
+
+const taskStore = useTaskStore()
+
+const totalTasks = computed(() => taskStore.tasks.length)
+const completedCount = computed(() =>
+  taskStore.tasks.filter(t => t.completed).length
+)
+const pendingCount = computed(() =>
+  taskStore.tasks.filter(t => !t.completed).length
+)
+
+const completionRate = computed(() =>
+  totalTasks.value
+    ? Math.round((completedCount.value / totalTasks.value) * 100)
+    : 0
+)
+
+/*import draggable from 'vuedraggable'
 import { useTaskStore } from '@/stores/task.store'
 import { Task } from '@/types/task'
 
@@ -68,11 +97,11 @@ const selectedDueDate = ref<string | null>(null)
 
 onMounted(() => {
   taskStore.init()
-})
+})*/
 
 /* ================= STATISTICS ================= */
 
-const totalTasks = computed(() => taskStore.tasks.length)
+/*const totalTasks = computed(() => taskStore.tasks.length)
 
 const completedCount = computed(() =>
   taskStore.tasks.filter(t => t.completed).length
@@ -86,9 +115,38 @@ const completionRate = computed(() =>
   totalTasks.value
     ? Math.round((completedCount.value / totalTasks.value) * 100)
     : 0
-)
+)*/
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+.circle-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0;
+}
 
+.circular-chart {
+  max-width: 200px;
+  max-height: 200px;
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #eee;
+  stroke-width: 3.8;
+}
+
+.circle {
+  fill: none;
+  stroke: var(--ion-color-primary);
+  stroke-width: 3.8;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.6s ease;
+}
+
+.percentage {
+  fill: var(--ion-text-color);
+  font-size: 0.5em;
+  text-anchor: middle;
+}
 </style>
