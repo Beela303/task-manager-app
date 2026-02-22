@@ -11,9 +11,11 @@
       <!-- Search Bar -->
       <ion-searchbar
         placeholder="Search tasks"
-        @ionInput="taskStore.setSearchQuery($event.detail.value)"
+        @ionInput="taskStore.setSearchQuery($event.detail.value || '')"
       />
-
+      
+        <!--@ionInput="taskStore.setSearchQuery($event.detail.value)"-->
+        
       <!-- Dropdown -->
       <ion-item>
         <ion-label>Sort By</ion-label>
