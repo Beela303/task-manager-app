@@ -8,54 +8,6 @@
 
     <ion-content class="ion-padding">
 
-      <!-- ================= STATISTICS ================= -->
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Statistics</ion-card-title>
-        </ion-card-header>
-
-        <ion-card-content>
-          <p>Total: {{ totalTasks }}</p>
-          <p>Completed: {{ completedCount }}</p>
-          <p>Pending: {{ pendingCount }}</p>
-          <p>Completion: {{ completionRate }}%</p>
-
-          <ion-progress-bar
-            :value="completionRate / 100"
-          />
-        </ion-card-content>
-      </ion-card>
-
-      <!-- ================= ADD TASK ================= -->
-
-      <ion-item>
-        <ion-input
-          v-model="newTask"
-          placeholder="Enter task"
-        />
-      </ion-item>
-
-      <ion-item>
-        <ion-label>Priority</ion-label>
-        <ion-select v-model="selectedPriority">
-          <ion-select-option value="low">Low</ion-select-option>
-          <ion-select-option value="medium">Medium</ion-select-option>
-          <ion-select-option value="high">High</ion-select-option>
-        </ion-select>
-      </ion-item>
-
-      <ion-item>
-        <ion-label>Due Date</ion-label>
-        <ion-datetime
-          presentation="date"
-          v-model="selectedDueDate"
-        />
-      </ion-item>
-
-      <ion-button expand="block" @click="createTask">
-        Add Task
-      </ion-button>
-
       <!-- Search Bar -->
       <ion-searchbar
         placeholder="Search tasks"
@@ -253,24 +205,6 @@ onMounted(() => {
   taskStore.init()
 })
 
-function createTask() {
-  if (!newTask.value.trim()) return
-
-  const task: Task = {
-    id: crypto.randomUUID(),
-    title: newTask.value,
-    completed: false,
-    createdAt: new Date(),
-    dueDate: selectedDueDate.value
-      ? new Date(selectedDueDate.value)
-      : null,
-    priority: selectedPriority.value
-  }
-
-  taskStore.addTask(task)
-  newTask.value = ''
-}
-
 function onDragEnd(event: any) {
   const { oldIndex, newIndex } = event
   if (oldIndex === newIndex) return
@@ -321,23 +255,6 @@ function priorityColor(priority: 'low' | 'medium' | 'high') {
   return map[priority]
 }
 
-/* ================= STATISTICS ================= */
-
-const totalTasks = computed(() => taskStore.tasks.length)
-
-const completedCount = computed(() =>
-  taskStore.tasks.filter(t => t.completed).length
-)
-
-const pendingCount = computed(() =>
-  taskStore.tasks.filter(t => !t.completed).length
-)
-
-const completionRate = computed(() =>
-  totalTasks.value
-    ? Math.round((completedCount.value / totalTasks.value) * 100)
-    : 0
-)
 </script>
 
 <style scoped>
